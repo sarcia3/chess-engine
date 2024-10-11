@@ -3,7 +3,6 @@
 
 #include "bitboard.h"
 #include "board_utils.h"
-#include "move.h"
 #include <stack>
 #include <map>
 #include <vector>
@@ -13,16 +12,14 @@
 #include <iostream>
 #include <cmath> 
 #include <set>
+#include <bitset>
 
 using namespace std;
 
 class board {
     private:
         array<bitboard, 12> is_piece;
-        bool white_short_castle;
-        bool white_long_castle;
-        bool black_short_castle;
-        bool black_long_castle;
+        bitset<4> castle;
         int ply_100;
         int ply;
         bool turn;
@@ -57,7 +54,7 @@ class board {
 
         bool is_legal() const;
 
-        void make_move(const pair<int, int> &move, bool real);
+        void make_move(const move &arg, bool real);
         void make_move(const pair<int, int> &start, const pair<int, int> &end, bool real);
         //the need for bool real arises from the fact that only after actual moves
         //we want to update the game state
@@ -68,10 +65,12 @@ class board {
             int piece_type = -1;
             int capture_position = -1;
             int capture_piece = -1;
+            int promotion_type = -1;
+            bitset<4> castle_disruptions;
             move();
-            move(pair<int, int> arg);
-
         };
+        
+        move move_from_pair(pair<int, int> arg);
 
     public: 
         enum game_state {undecided, white_won, draw_3_fold, draw_50_rule, draw_stalemate, black_won};

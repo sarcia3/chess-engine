@@ -34,10 +34,7 @@ board::board()
       is_black(is_color[1]),
       current_state(undecided)
 {
-    white_short_castle = true;
-    white_long_castle  = true;
-    black_short_castle = true;
-    black_long_castle  = true;
+    castle.set();
     ply_100 = 0;
     ply = 0;
     turn = 0;
@@ -64,10 +61,7 @@ board::board(const board& to_copy)
       is_black(is_color[1]),
       current_state(to_copy.current_state)
 {
-    white_short_castle = to_copy.white_short_castle;
-    white_long_castle = to_copy.white_long_castle;
-    black_short_castle = to_copy.black_short_castle;
-    black_long_castle = to_copy.black_long_castle;
+    castle = to_copy.castle;
     ply_100 = to_copy.ply_100;
     ply = to_copy.ply;
     turn = to_copy.turn;
@@ -325,22 +319,22 @@ stack<pair<int, int>> board::gen_moves() const {
     stack<pair<int, int>> res;
 
     if(turn == 0) {
-        if(white_short_castle && !((is_anything | gen_attacked(!turn)) & (96ULL))){
+        if(castle[0] && !((is_anything | gen_attacked(!turn)) & (96ULL))){
             res.push({0, 0});
         }
-        if(white_long_castle && !((is_anything | gen_attacked(!turn)) & (14ULL))){
+        if(castle[1] && !((is_anything | gen_attacked(!turn)) & (14ULL))){
             res.push({1, 1});
         }
     } else {
-        if(black_short_castle && !((is_anything | gen_attacked(!turn)) & (0x6000000000000000ULL))){
+        if(castle[2] && !((is_anything | gen_attacked(!turn)) & (0x6000000000000000ULL))){
             res.push({2, 2});
         }
-        if(black_long_castle && !((is_anything | gen_attacked(!turn)) & (0xE00000000000000ULL))){
+        if(castle[3] && !((is_anything | gen_attacked(!turn)) & (0xE00000000000000ULL))){
             res.push({3, 3});
         }
     }
 
-    while(S.size()){
+    while(S.size()) {
         auto top = S.top(); S.pop();
         board copy(*this);
         copy.make_move(top, false);
@@ -354,67 +348,57 @@ stack<pair<int, int>> board::gen_moves() const {
     return res;
 }
 
-void board::make_move(const pair<int, int> &move, bool real){
-    auto [start, end] = move;
-    if(start == 0 && end == 0) {
+void board::make_move(const move &arg, bool real){
+    castle &= ~castle_disruptions;
+    en_pessant = {-1, -1};
+    if(arg.start == 0 && arg.end == 0) {
         white_king.set_val(false, ind_from_coordinate({0, 4}));
         white_king.set_val(true, ind_from_coordinate({0, 6}));
         white_rook.set_val(false, ind_from_coordinate({0, 7}));
         white_rook.set_val(true, ind_from_coordinate({0, 5}));
-        white_short_castle = false;
+        castle[0] = 0;
     }
-    if(start == 1 && end == 1) {
+    if(arg.start == 1 && arg.end == 1) {
         white_king.set_val(false, ind_from_coordinate({0, 4}));
         white_king.set_val(true, ind_from_coordinate({0, 2}));
         white_rook.set_val(false, ind_from_coordinate({0, 0}));
         white_rook.set_val(true, ind_from_coordinate({0, 3}));
-        white_long_castle = false;
+        castle[1] = 0;
     }
-    if(start == 2 && end == 2) {
+    if(arg.start == 2 && arg.end == 2) {
         black_king.set_val(false, ind_from_coordinate({7, 4}));
         black_king.set_val(true, ind_from_coordinate({7, 6}));
         black_rook.set_val(false, ind_from_coordinate({7, 7}));
         black_rook.set_val(true, ind_from_coordinate({7, 5}));
-        black_short_castle = false;
+        castle[2] = 0;
     }
-    if(start == 3 && end == 3) {
+    if(arg.start == 3 && arg.end == 3) {
         black_king.set_val(false, ind_from_coordinate({7, 4}));
         black_king.set_val(true, ind_from_coordinate({7, 2}));
         black_rook.set_val(false, ind_from_coordinate({7, 0}));
         black_rook.set_val(true, ind_from_coordinate({7, 3}));
-        black_long_castle = false;
+        castle[3] = 0;
     }
-    if(start == end) {
+    if(arg.start == arg.end) {
         ply_100 = 0;
         ply++;
         turn ^= 1;
-        en_pessant = {-1, -1};
         update_is_anything_color();
         if(real) update_state();
         return;
     }
 
 
-    if(start < 0) { //promotion AHHHH
-        start *= -1;
-        int prom_type = end%4;
-        end>>=2;
+    auto [start_row, start_col] = gen_coordinate(arg.start);
+    auto [end_row, end_col] = gen_coordinate(arg.end);
 
-        auto [start_row, start_col] = gen_coordinate(start);
-        auto [end_row, end_col] = gen_coordinate(end);
+    if(promotion_type != -1) {
 
-        if(end == 4) white_short_castle = white_long_castle = false;
-        if(end == 60) black_short_castle = black_long_castle = false;
-        if(end == 0) white_short_castle = false;
-        if(end == 7) white_long_castle = false;
-        if(end == 56) black_short_castle = false;
-        if(end == 63) black_long_castle = false;
-
-        en_pessant = {-1, -1};
-
-        is_piece[turn*6].set_val(false, start);
-        for(auto &elem : is_piece) if(elem[end]) { elem.set_val(false, end); ply_100 = -1; }
-        is_piece[turn*6 + 1 + prom_type].set_val(1, end);
+        is_piece[arg.piece_type].set_val(false, start);
+        if(arg.capture_piece != -1)
+            is_piece[arg.capture_piece].set_val(false, arg.end_pos); 
+        
+        is_piece[promotion_type].set_val(true, end);
         ply_100 = 0;
         ply++;
         turn^=1;
@@ -423,41 +407,27 @@ void board::make_move(const pair<int, int> &move, bool real){
         return;
     }
 
-    bitboard tmp1(1ULL << start);
-    bitboard tmp2(1ULL << end);
-    int start_pos=0, end_pos=0;
-    for(int &i=start_pos; i<12; i++) if((tmp1 & is_piece[i]) != 0) break;
-    for(int &j=end_pos; j<12; j++) if((tmp2 & is_piece[j]) != 0) break;
-
-    auto [start_row, start_col] = gen_coordinate(start);
-    auto [end_row, end_col] = gen_coordinate(end);
-
-    if(end_pos == 12 && start_col != end_col && is_piece[6*turn][start]) { // en pessant
-        pair<int, int> sec_end_pos = {start_row, end_col};
-        for(auto &elem : is_piece) 
-            elem.set_val(false, ind_from_coordinate(sec_end_pos));
-        
-        is_piece[start_pos].set_val(false, start);
-        is_piece[start_pos].set_val(true, end);
+    if(arg.capture_position != arg.end_pos) { // en pessant
+        is_piece[arg.capture_piece].set_val(false, capture_position);
+        is_piece[arg.piece_type].set_val(false, start);
+        is_piece[arg.piece_type].set_val(true, end);
         ply_100 = 0;
         ply++;
         turn ^= 1;
-        en_pessant = {-1, -1};
     } else {
         end_pos = 0;
-        if(start == 4 || end==4) white_short_castle = white_long_castle = false;
-        if(start == 60 ||end==4) black_short_castle = black_long_castle = false;
-        if(start == 0 || end==4) white_short_castle = false;
-        if(start == 7 || end==4) white_long_castle = false;
-        if(start == 56 || end==4) black_short_castle = false;
-        if(start == 63 || end==4) black_long_castle = false;
 
-        if(start_pos == 6*turn && abs(start-end) == 16) en_pessant = gen_coordinate((start+end)/2);
-        else en_pessant = {-1, -1};
+        if(arg.piece_type == 6*turn && abs(arg.start_pos-arg.end_pos) == 16) 
+            en_pessant = gen_coordinate((arg.start_pos+arg.end_pos)/2);
 
-        is_piece[start_pos].set_val(false, start);
-        for(auto &elem : is_piece) if(elem[end]) { elem.set_val(false, end); ply_100 = -1; }
-        is_piece[start_pos].set_val(true, end);
+        is_piece[arg.piece_type].set_val(false, start);
+
+        if(capture_piece != -1) { 
+            is_piece[capture_piece].set_val(false, end); 
+            ply_100 = -1; 
+        }
+
+        is_piece[piece_type].set_val(true, end);
         ply_100++;
         ply++;
         turn^=1;
@@ -622,10 +592,10 @@ board::board (const string &fen)
     fen_pos++;
     if(fen[fen_pos] != '-'){
         while(fen[fen_pos] != ' '){
-            white_short_castle |= (fen[fen_pos] == 'K');
-            white_long_castle  |= (fen[fen_pos] == 'Q');
-            black_short_castle |= (fen[fen_pos] == 'k');
-            black_long_castle  |= (fen[fen_pos] == 'q');
+            castle[0] = castle[0] | (fen[fen_pos] == 'K');
+            castle[1] = castle[1] | (fen[fen_pos] == 'Q');
+            castle[2] = castle[2] | (fen[fen_pos] == 'k');
+            castle[3] = castle[3] | (fen[fen_pos] == 'q');
 
             fen_pos++;
         }
