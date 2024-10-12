@@ -18,6 +18,20 @@ using namespace std;
 
 class board {
     private:
+        struct move{
+            int start_pos = -1;
+            int end_pos = -1;
+            int piece_type = -1;
+            int capture_position = -1;
+            int capture_piece = -1;
+            int promotion_type = -1;
+            bitset<4> castle_disruptions;
+            pair<int, int> old_en_pessant = {-1, -1};
+            move();
+        };
+
+        move move_from_pair(pair<int, int> arg) const;
+
         array<bitboard, 12> is_piece;
         bitset<4> castle;
         int ply_100;
@@ -55,22 +69,13 @@ class board {
         bool is_legal() const;
 
         void make_move(const move &arg, bool real);
+        void make_move(const pair<int, int> &arg, bool real);
         void make_move(const pair<int, int> &start, const pair<int, int> &end, bool real);
         //the need for bool real arises from the fact that only after actual moves
         //we want to update the game state
         //if we had always tried to update we would have an infinite loop
-        struct move{
-            int start_pos = -1;
-            int end_pos = -1;
-            int piece_type = -1;
-            int capture_position = -1;
-            int capture_piece = -1;
-            int promotion_type = -1;
-            bitset<4> castle_disruptions;
-            move();
-        };
-        
-        move move_from_pair(pair<int, int> arg);
+        void undo_move(const move &arg);
+
 
     public: 
         enum game_state {undecided, white_won, draw_3_fold, draw_50_rule, draw_stalemate, black_won};
@@ -94,6 +99,8 @@ class board {
         float evaluate_white_pov() const;
         
         pair<float, pair<int, int>> negaMax_search(int depth) const;
+
+       
 
 };
 #endif

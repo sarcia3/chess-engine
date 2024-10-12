@@ -337,7 +337,7 @@ stack<pair<int, int>> board::gen_moves() const {
     while(S.size()) {
         auto top = S.top(); S.pop();
         board copy(*this);
-        copy.make_move(top, false);
+        copy.make_move(copy.move_from_pair(top), false);
         if(copy.is_legal()) res.push(top);
     }
     if(ply_100 == 100) return {};
@@ -349,37 +349,37 @@ stack<pair<int, int>> board::gen_moves() const {
 }
 
 void board::make_move(const move &arg, bool real){
-    castle &= ~castle_disruptions;
+    castle &= ~arg.castle_disruptions;
     en_pessant = {-1, -1};
-    if(arg.start == 0 && arg.end == 0) {
+    if(arg.start_pos == 0 && arg.end_pos == 0) {
         white_king.set_val(false, ind_from_coordinate({0, 4}));
         white_king.set_val(true, ind_from_coordinate({0, 6}));
         white_rook.set_val(false, ind_from_coordinate({0, 7}));
         white_rook.set_val(true, ind_from_coordinate({0, 5}));
         castle[0] = 0;
     }
-    if(arg.start == 1 && arg.end == 1) {
+    if(arg.start_pos == 1 && arg.end_pos == 1) {
         white_king.set_val(false, ind_from_coordinate({0, 4}));
         white_king.set_val(true, ind_from_coordinate({0, 2}));
         white_rook.set_val(false, ind_from_coordinate({0, 0}));
         white_rook.set_val(true, ind_from_coordinate({0, 3}));
         castle[1] = 0;
     }
-    if(arg.start == 2 && arg.end == 2) {
+    if(arg.start_pos == 2 && arg.end_pos == 2) {
         black_king.set_val(false, ind_from_coordinate({7, 4}));
         black_king.set_val(true, ind_from_coordinate({7, 6}));
         black_rook.set_val(false, ind_from_coordinate({7, 7}));
         black_rook.set_val(true, ind_from_coordinate({7, 5}));
         castle[2] = 0;
     }
-    if(arg.start == 3 && arg.end == 3) {
+    if(arg.start_pos == 3 && arg.end_pos == 2) {
         black_king.set_val(false, ind_from_coordinate({7, 4}));
         black_king.set_val(true, ind_from_coordinate({7, 2}));
         black_rook.set_val(false, ind_from_coordinate({7, 0}));
         black_rook.set_val(true, ind_from_coordinate({7, 3}));
         castle[3] = 0;
     }
-    if(arg.start == arg.end) {
+    if(arg.start_pos == arg.end_pos) {
         ply_100 = 0;
         ply++;
         turn ^= 1;
@@ -389,16 +389,16 @@ void board::make_move(const move &arg, bool real){
     }
 
 
-    auto [start_row, start_col] = gen_coordinate(arg.start);
-    auto [end_row, end_col] = gen_coordinate(arg.end);
+    auto [start_row, start_col] = gen_coordinate(arg.start_pos);
+    auto [end_row, end_col] = gen_coordinate(arg.end_pos);
 
-    if(promotion_type != -1) {
+    if(arg.promotion_type != -1) {
 
-        is_piece[arg.piece_type].set_val(false, start);
+        is_piece[arg.piece_type].set_val(false, arg.start_pos);
         if(arg.capture_piece != -1)
             is_piece[arg.capture_piece].set_val(false, arg.end_pos); 
         
-        is_piece[promotion_type].set_val(true, end);
+        is_piece[arg.promotion_type].set_val(true, arg.end_pos);
         ply_100 = 0;
         ply++;
         turn^=1;
@@ -408,26 +408,24 @@ void board::make_move(const move &arg, bool real){
     }
 
     if(arg.capture_position != arg.end_pos) { // en pessant
-        is_piece[arg.capture_piece].set_val(false, capture_position);
-        is_piece[arg.piece_type].set_val(false, start);
-        is_piece[arg.piece_type].set_val(true, end);
+        is_piece[arg.capture_piece].set_val(false, arg.capture_position);
+        is_piece[arg.piece_type].set_val(false, arg.start_pos);
+        is_piece[arg.piece_type].set_val(true, arg.end_pos);
         ply_100 = 0;
         ply++;
         turn ^= 1;
     } else {
-        end_pos = 0;
-
         if(arg.piece_type == 6*turn && abs(arg.start_pos-arg.end_pos) == 16) 
             en_pessant = gen_coordinate((arg.start_pos+arg.end_pos)/2);
 
-        is_piece[arg.piece_type].set_val(false, start);
+        is_piece[arg.piece_type].set_val(false, arg.start_pos);
 
-        if(capture_piece != -1) { 
-            is_piece[capture_piece].set_val(false, end); 
+        if(arg.capture_piece != -1) { 
+            is_piece[arg.capture_piece].set_val(false, arg.end_pos); 
             ply_100 = -1; 
         }
 
-        is_piece[piece_type].set_val(true, end);
+        is_piece[arg.piece_type].set_val(true, arg.end_pos);
         ply_100++;
         ply++;
         turn^=1;
@@ -436,10 +434,49 @@ void board::make_move(const move &arg, bool real){
     if(real) update_state();
 }
 
-void board::make_move(const pair<int, int> &start, const pair<int, int> &end, bool real){
-    make_move({ind_from_coordinate(start), ind_from_coordinate(end)}, real);
+void board::make_move(const pair<int, int> &arg, bool real) {
+    make_move(move_from_pair(arg), real);
 }
 
+void board::make_move(const pair<int, int> &start, const pair<int, int> &end, bool real){
+    make_move(move_from_pair({ind_from_coordinate(start), ind_from_coordinate(end)}), real);
+}
+
+void board::undo_move(const board::move &arg) {
+    castle |= arg.castle_disruptions; 
+    en_pessant = arg.old_en_pessant;
+    if(arg.promotion_type != -1) is_piece[arg.promotion_type].set_val(false, arg.end_pos);
+    if(arg.capture_piece != -1) is_piece[arg.capture_piece].set_val(true, arg.capture_position);
+    if(arg.start_pos == arg.end_pos) {
+        if(arg.start_pos == 0) {
+            white_king.set_val(true, 4);
+            white_king.set_val(false, 6);
+            white_rook.set_val(true, 7);
+            white_rook.set_val(false, 5);
+        }
+        if(arg.start_pos == 1) {
+            white_king.set_val(true, 4);
+            white_king.set_val(false, 2);
+            white_rook.set_val(true, 0);
+            white_rook.set_val(false, 3);
+        }
+        if(arg.start_pos == 2) {
+            black_king.set_val(true, 56+4);
+            black_king.set_val(false, 56+6);
+            black_rook.set_val(true, 56+7);
+            black_rook.set_val(false, 56+5);
+        }
+        if(arg.start_pos == 3) {
+            black_king.set_val(true, 56+4);
+            black_king.set_val(false, 56+2);
+            black_rook.set_val(true, 56+0);
+            black_rook.set_val(false, 56+3);
+        }
+    } else {
+        is_piece[arg.piece_type].set_val(false, arg.end_pos);
+        is_piece[arg.piece_type].set_val(true, arg.start_pos);
+    }
+};
 void board::update_state(){
     if(ply_100 == 100) {current_state = draw_50_rule; return;}
     if(turn == 0) {if(black_king & gen_attacked(turn)) {current_state = white_won; return;}}

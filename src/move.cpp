@@ -7,7 +7,7 @@ board::move::move() {
     castle_disruptions.reset();
 }
 
-board::move board::move_from_pair(pair<int, int> arg) {
+board::move board::move_from_pair(pair<int, int> arg) const {
     board::move res;
     res.start_pos = arg.first;
     res.end_pos = arg.second; //i hate c++ why doesnt structured binding work for such cases
