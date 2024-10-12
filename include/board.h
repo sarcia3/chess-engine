@@ -25,6 +25,7 @@ class board {
             int capture_position = -1;
             int capture_piece = -1;
             int promotion_type = -1;
+            int old_ply_100;
             bitset<4> castle_disruptions;
             pair<int, int> old_en_pessant = {-1, -1};
             move();
@@ -100,7 +101,7 @@ class board {
         
         pair<float, pair<int, int>> negaMax_search(int depth) const;
 
-       
+        int perft(int depth);
 
 };
 #endif

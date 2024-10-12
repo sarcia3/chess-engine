@@ -215,8 +215,8 @@ stack<pair<int, int>> board::gen_moves() const {
             if(white_pawn[i]) {
                 auto [row, column] = gen_coordinate(i);
                 if(coordinate_is_legal({row+1, column-1}) && 
-                    (is_black[ind_from_coordinate({row+1, column-1})]) || (en_pessant.first == row+1 && en_pessant.second == column-1))
-                        pawn_push(i, ind_from_coordinate({row+1, column-1}));
+                    ((is_black[ind_from_coordinate({row+1, column-1})]) || (en_pessant.first == row+1 && en_pessant.second == column-1)))
+                       pawn_push(i, ind_from_coordinate({row+1, column-1}));
                 if(coordinate_is_legal({row+1, column+1}) && 
                     (is_black[ind_from_coordinate({row+1, column+1})] || (en_pessant.first == row+1 && en_pessant.second == column+1)))
                         pawn_push(i, ind_from_coordinate({row+1, column+1}));
@@ -407,7 +407,7 @@ void board::make_move(const move &arg, bool real){
         return;
     }
 
-    if(arg.capture_position != arg.end_pos) { // en pessant
+    if(arg.capture_position != -1 && arg.capture_position != arg.end_pos) { // en pessant
         is_piece[arg.capture_piece].set_val(false, arg.capture_position);
         is_piece[arg.piece_type].set_val(false, arg.start_pos);
         is_piece[arg.piece_type].set_val(true, arg.end_pos);
@@ -476,6 +476,10 @@ void board::undo_move(const board::move &arg) {
         is_piece[arg.piece_type].set_val(false, arg.end_pos);
         is_piece[arg.piece_type].set_val(true, arg.start_pos);
     }
+    turn ^= 1;
+    ply_100 = arg.old_ply_100;
+    ply--;
+    update_is_anything_color();
 };
 void board::update_state(){
     if(ply_100 == 100) {current_state = draw_50_rule; return;}
