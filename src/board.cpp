@@ -193,7 +193,7 @@ bool board::is_legal() const{
     return true;
 };
 
-stack<pair<int, int>> board::gen_moves() const {
+stack<pair<int, int>> board::gen_moves() {
     stack<pair<int, int>> S;
 
     auto pawn_push = [&](int start, int end){
@@ -336,9 +336,11 @@ stack<pair<int, int>> board::gen_moves() const {
 
     while(S.size()) {
         auto top = S.top(); S.pop();
-        board copy(*this);
-        copy.make_move(copy.move_from_pair(top), false);
-        if(copy.is_legal()) res.push(top);
+
+        auto move = move_from_pair(top);
+        make_move(move, false);
+        if(is_legal()) res.push(top);
+        undo_move(move);
     }
     if(ply_100 == 100) return {};
     if(turn == 0 && res.empty()) if(white_king & gen_attacked(!turn)) return {};
@@ -488,7 +490,7 @@ void board::update_state(){
     if(gen_moves().size() == 0) {current_state == draw_stalemate; return;}
 }
 
-set<string> board::print_moves() const{
+set<string> board::print_moves() {
     cout << "Avalaible moves";
     auto tmp = gen_moves();
     set<string> res;

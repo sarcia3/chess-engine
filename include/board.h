@@ -28,6 +28,7 @@ class board {
             int old_ply_100;
             bitset<4> castle_disruptions;
             pair<int, int> old_en_pessant = {-1, -1};
+            void display() const;
             move();
         };
 
@@ -65,7 +66,7 @@ class board {
         void update_is_anything_color();
 
         bitboard gen_attacked(int gen_turn) const;
-        stack<pair<int, int>> gen_moves() const;
+        stack<pair<int, int>> gen_moves();
 
         bool is_legal() const;
 
@@ -85,7 +86,7 @@ class board {
 
         void update_state();
 
-        set<string> print_moves() const;
+        set<string> print_moves();
 
         void user_move(set<string> legal);
 
