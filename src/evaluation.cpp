@@ -19,7 +19,7 @@ float board::evaluate() const{
     return res;
 }
 
-float board::evaluate_white_pov() const{
+float board::evaluate_white_pov() {
     return (turn ? -evaluate() : evaluate());
 }
 
@@ -27,7 +27,7 @@ float board::evaluate_white_pov() const{
 346         copy.make_move(top, false);
 */
 
-pair<float, pair<int, int>> board::negaMax_search(int depth) const {
+pair<float, pair<int, int>> board::negaMax_search(int depth) {
     if(depth <= 0) return {evaluate(), {-1, -1}};
     
 //    cerr <<depth<<'\n';
@@ -36,10 +36,10 @@ pair<float, pair<int, int>> board::negaMax_search(int depth) const {
     auto moves = gen_moves();
     while(moves.size()){
 //        cerr<< "depth: " << depth << " moves left: " << moves.size() << '\n';
-        auto move = moves.top(); moves.pop();
-        board copy(*this);
-        copy.make_move(move, true);
-        auto score = copy.negaMax_search(depth-1);
+        auto move = move_from_pair(moves.top()); moves.pop();
+        make_move(move, true);
+        auto score = negaMax_search(depth-1);
+        undo_move(move);
         score.first *= -1;
         if(score.first > max.first)
             max = score;

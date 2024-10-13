@@ -97,11 +97,11 @@ class board {
 
         float evaluate() const;
 
-        float evaluate_white_pov() const;
+        float evaluate_white_pov();
         
-        pair<float, pair<int, int>> negaMax_search(int depth) const;
+        pair<float, pair<int, int>> negaMax_search(int depth);
 
-        int perft(int depth);
+        int perft(int depth, int org_depth);
 
 };
 #endif
