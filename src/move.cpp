@@ -26,6 +26,7 @@ board::move board::move_from_pair(pair<int, int> arg) const {
         }
 
     if(res.piece_type == turn * 6 && (res.start_pos - res.end_pos + 64)%8 != 0 && !is_anything[res.end_pos]) {
+        cerr<<"enpess";
         res.capture_position = ind_from_coordinate({res.start_pos/8, res.end_pos%8});
         for(res.capture_piece = 6-6*turn; res.capture_piece < 12-6*turn; res.capture_piece++)
             if(is_piece[res.capture_piece][res.capture_position]) break;
@@ -47,3 +48,11 @@ board::move board::move_from_pair(pair<int, int> arg) const {
     return res;
 }
 
+void board::move::display() const {
+    cout << "start_pos: " << start_pos << '\n'
+         << "end_pos: " << end_pos << '\n'
+         << "piece_type: " << piece_type << '\n'
+         << "capture_position: " << capture_position << '\n'
+         << "capture_piece: " << capture_piece << '\n'
+         << "promotion type: " << promotion_type << "\n\n";
+}
