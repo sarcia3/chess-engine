@@ -651,14 +651,14 @@ board::board (const string &fen)
     fen_pos++;
     fen_pos++;
 
-    while(fen[fen_pos] != ' '){
+    while(fen_pos < fen.size() && fen[fen_pos] != ' '){
         ply_100 *= 10;
         ply_100 += (fen[fen_pos++] - '0');
     }
     
     fen_pos++;
 
-    while(fen.size() > fen_pos){
+    while(fen_pos < fen.size()){
         ply *= 10;
         ply += (fen[fen_pos++] - '0');
     }
