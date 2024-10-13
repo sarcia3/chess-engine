@@ -16,7 +16,7 @@ board::move board::move_from_pair(pair<int, int> arg) const {
 
         if(res.start_pos<0) { //promotion
             res.start_pos *= -1;
-            res.promotion_type = res.end_pos % 4 + 1;
+            res.promotion_type = res.end_pos % 4 + 1 + turn * 6;
             res.end_pos >>= 2;
         }
 
