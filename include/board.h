@@ -25,7 +25,7 @@ class board {
             int capture_position = -1;
             int capture_piece = -1;
             int promotion_type = -1;
-            int old_ply_100;
+            int old_ply_100 = -1;
             bitset<4> castle_disruptions;
             pair<int, int> old_en_pessant = {-1, -1};
             void display() const;
