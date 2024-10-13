@@ -34,7 +34,7 @@ board::board()
       is_black(is_color[1]),
       current_state(undecided)
 {
-    castle.set();
+    castle.reset();
     ply_100 = 0;
     ply = 0;
     turn = 0;
@@ -170,11 +170,10 @@ bitboard board::gen_attacked(int gen_turn) const {
 bool board::is_legal() const{
     //1st check - is every square occupied by exactly zero or one piece
     bitboard current = 0;
-    for(auto &elem : is_piece){
+    for(const auto &elem : is_piece) 
         if(current & elem)
             return false;
         else current |= elem;
-    }
 
     //2nd check - pawns on first and last ranks
     if(0xFF000000000000FF & (white_pawn | black_pawn))
@@ -318,25 +317,24 @@ stack<pair<int, int>> board::gen_moves() {
 
     stack<pair<int, int>> res;
 
-    if(turn == 0) {
+    if(turn == 0 && !gen_attacked(!turn)[4]) {
         if(castle[0] && !((is_anything | gen_attacked(!turn)) & (96ULL))){
             res.push({0, 0});
         }
-        if(castle[1] && !((is_anything | gen_attacked(!turn)) & (14ULL))){
+        if(castle[1] && !(is_anything & 14ULL) && !(gen_attacked(!turn) & 12ULL)){
             res.push({1, 1});
         }
-    } else {
+    } else if(!gen_attacked(!turn)[60]){
         if(castle[2] && !((is_anything | gen_attacked(!turn)) & (0x6000000000000000ULL))){
             res.push({2, 2});
         }
-        if(castle[3] && !((is_anything | gen_attacked(!turn)) & (0xE00000000000000ULL))){
-            res.push({3, 3});
+        if(castle[3] && (!(is_anything & 0xE00000000000000ULL)) && (!(gen_attacked(!turn) & 0xC00000000000000ULL))){
+            res.push({3, 3}); 
         }
     }
 
     while(S.size()) {
         auto top = S.top(); S.pop();
-
         auto move = move_from_pair(top);
         make_move(move, false);
         if(is_legal()) res.push(top);
