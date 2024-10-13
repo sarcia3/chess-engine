@@ -12,7 +12,7 @@ int board::perft(int depth, int org_depth) {
         make_move(move, false);
         auto perft_res = perft(depth-1, org_depth);
         if(depth == org_depth)
-            cout << perft_res << ' ' << move.start_pos << ' ' << move.end_pos << '\n';
+            cout << perft_res << ' ' << board_utils::move_readable({move.start_pos, move.end_pos}) << '\n';
         res += perft_res;
         undo_move(move);
     }
