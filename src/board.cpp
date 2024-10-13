@@ -374,7 +374,7 @@ void board::make_move(const move &arg, bool real){
         black_rook.set_val(true, ind_from_coordinate({7, 5}));
         castle[2] = 0;
     }
-    if(arg.start_pos == 3 && arg.end_pos == 2) {
+    if(arg.start_pos == 3 && arg.end_pos == 3) {
         black_king.set_val(false, ind_from_coordinate({7, 4}));
         black_king.set_val(true, ind_from_coordinate({7, 2}));
         black_rook.set_val(false, ind_from_coordinate({7, 0}));
