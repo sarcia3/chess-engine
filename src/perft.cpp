@@ -1,8 +1,8 @@
 #include "board.h"
 
 int board::perft(int depth, int org_depth) {
-    if(depth == 0) {
-        return 1;
+    if(depth == 1) {
+        return gen_moves().size();
     }
     auto moves = gen_moves();
     int res = 0;
