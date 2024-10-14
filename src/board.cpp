@@ -86,21 +86,23 @@ bitboard board::gen_attacked(int gen_turn) const {
     stack<pair<int, int>> S;
 
     if(gen_turn == 0) {
-        for(int i=0; i<64; i++)
-            if(white_pawn[i]) {
-                auto [row, column] = gen_coordinate(i);
+        bitboard copy = white_pawn;
+        for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+            copy.set_val(false, i);
+            auto [row, column] = gen_coordinate(i);
 
-                S.push({row+1, column-1});
-                S.push({row+1, column+1});
-            }
+            S.push({row+1, column-1});
+            S.push({row+1, column+1});
+        }
     } else {
-        for(int i=0; i<64; i++)
-            if(black_pawn[i]) {
-                auto [row, column] = gen_coordinate(i);
+        bitboard copy = black_pawn;
+        for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+            copy.set_val(false, i);
+            auto [row, column] = gen_coordinate(i);
 
-                S.push({row-1, column-1});
-                S.push({row-1, column+1});
-            }
+            S.push({row-1, column-1});
+            S.push({row-1, column+1});
+        } 
     }
 
     const bitboard &turn_knight = is_piece[1 + 6 * gen_turn];
@@ -109,16 +111,17 @@ bitboard board::gen_attacked(int gen_turn) const {
     const bitboard &turn_queen  = is_piece[4 + 6 * gen_turn];
     const bitboard &turn_king   = is_piece[5 + 6 * gen_turn];
 
-    for(int i=0; i<64; i++) 
-        if(turn_knight[i]) {
-                auto [row, column] = gen_coordinate(i);
+    bitboard copy = turn_knight;
+    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+        copy.set_val(false, i);
+        auto [row, column] = gen_coordinate(i);
 
-                for(int dir1=-1; dir1<2; dir1+=2)
-                    for(int dir2=-1; dir2<2; dir2+=2) {
-                        S.push({row + 2 * dir1, column + 1 * dir2});
-                        S.push({row + 1 * dir1, column + 2 * dir2});
-                    }
-        }
+        for(int dir1=-1; dir1<2; dir1+=2)
+            for(int dir2=-1; dir2<2; dir2+=2) {
+                S.push({row + 2 * dir1, column + 1 * dir2});
+                S.push({row + 1 * dir1, column + 2 * dir2});
+            }
+    }
 
     pair<int, int> direction;
     function<void(pair<int, int>)> go_into = [&](pair<int, int> coordinate) {
@@ -131,28 +134,31 @@ bitboard board::gen_attacked(int gen_turn) const {
         }
     };
 
-    for(int i=0; i<64; i++) {
-
-        if(turn_bishop[i]) {
-            for(direction.first = -1; direction.first<2; direction.first+=2)
-                for(direction.second = -1; direction.second<2; direction.second+=2)
-                    go_into(gen_coordinate(i));
-        }
-
-        if(turn_rook[i]) {
-            for(direction.first = -1; direction.first<2; direction.first++)
-                for(direction.second = -1; direction.second<2; direction.second++)
-                    if(((bool)direction.first) ^ ((bool)direction.second))
-                        go_into(gen_coordinate(i));
-        }
-
-        if(turn_queen[i]) {
-            for(direction.first = -1; direction.first<2; direction.first++)
-                for(direction.second = -1; direction.second<2; direction.second++)
-                    if(direction.first != 0 || direction.second != 0)
-                        go_into(gen_coordinate(i));
-        }
+    copy = turn_bishop;
+    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        for(direction.first = -1; direction.first<2; direction.first+=2)
+            for(direction.second = -1; direction.second<2; direction.second+=2)
+                go_into(gen_coordinate(i));
     }
+
+    copy = turn_rook;
+    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        for(direction.first = -1; direction.first<2; direction.first++)
+            for(direction.second = -1; direction.second<2; direction.second++)
+                if(((bool)direction.first) ^ ((bool)direction.second))
+                    go_into(gen_coordinate(i));
+    }
+
+    copy = turn_queen;
+    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        for(direction.first = -1; direction.first<2; direction.first++)
+           for(direction.second = -1; direction.second<2; direction.second++)
+               if(direction.first != 0 || direction.second != 0)
+                   go_into(gen_coordinate(i));
+    }      
 
     bitboard res = 0;
 
@@ -193,6 +199,7 @@ bool board::is_legal() const{
 };
 
 stack<pair<int, int>> board::gen_moves() {
+    auto old = is_piece;
     stack<pair<int, int>> S;
 
     auto pawn_push = [&](int start, int end){
@@ -210,41 +217,41 @@ stack<pair<int, int>> board::gen_moves() {
     };
     
     if(turn == 0) {
-        for(int i=0; i<64; i++)
-            if(white_pawn[i]) {
-                auto [row, column] = gen_coordinate(i);
-                if(coordinate_is_legal({row+1, column-1}) && 
-                    ((is_black[ind_from_coordinate({row+1, column-1})]) || (en_pessant.first == row+1 && en_pessant.second == column-1)))
-                       pawn_push(i, ind_from_coordinate({row+1, column-1}));
-                if(coordinate_is_legal({row+1, column+1}) && 
-                    (is_black[ind_from_coordinate({row+1, column+1})] || (en_pessant.first == row+1 && en_pessant.second == column+1)))
-                        pawn_push(i, ind_from_coordinate({row+1, column+1}));
-                
-                if(!is_anything[i+8]) {
-                    pawn_push(i, i+8);
-                    if(row==1 && !is_anything[i+16])
-                        S.push({i, i+16}); // pawn push useless, thus omited
-                }
-
-                
+        bitboard copy = white_pawn;
+        for(int i=copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+            copy.set_val(false, i);
+            auto [row, column] = gen_coordinate(i);
+            if(coordinate_is_legal({row+1, column-1}) && 
+                ((is_black[ind_from_coordinate({row+1, column-1})]) || (en_pessant.first == row+1 && en_pessant.second == column-1)))
+                   pawn_push(i, ind_from_coordinate({row+1, column-1}));
+            if(coordinate_is_legal({row+1, column+1}) && 
+                (is_black[ind_from_coordinate({row+1, column+1})] || (en_pessant.first == row+1 && en_pessant.second == column+1)))
+                    pawn_push(i, ind_from_coordinate({row+1, column+1}));
+            
+            if(!is_anything[i+8]) {
+                pawn_push(i, i+8);
+                if(row==1 && !is_anything[i+16])
+                    S.push({i, i+16}); // pawn push useless, thus omited
             }
+        }
     } else {
-        for(int i=0; i<64; i++)
-            if(black_pawn[i]) {
-                auto [row, column] = gen_coordinate(i);
-                if(coordinate_is_legal({row-1, column-1}) && 
-                    (is_white[ind_from_coordinate({row-1, column-1})] || (en_pessant.first == row-1 && en_pessant.second == column-1)))
-                        pawn_push(i, ind_from_coordinate({row-1, column-1}));
-                if(coordinate_is_legal({row-1, column+1}) && 
-                    (is_white[ind_from_coordinate({row-1, column+1})] || (en_pessant.first == row-1 && en_pessant.second == column+1)))
-                        pawn_push(i, ind_from_coordinate({row-1, column+1}));
-                
-                if(!is_anything[i-8]) {
-                    pawn_push(i, ind_from_coordinate({row-1, column}));
-                    if(row==6 && !is_anything[i-16])
-                        S.push({i, i-16}); // pawn push useless, thus omited
-                }
+        bitboard copy = black_pawn;
+        for(int i=copy.get_first_one(); i>=0; i = copy.get_first_one()) {
+            copy.set_val(false, i);
+            auto [row, column] = gen_coordinate(i);
+            if(coordinate_is_legal({row-1, column-1}) && 
+                (is_white[ind_from_coordinate({row-1, column-1})] || (en_pessant.first == row-1 && en_pessant.second == column-1)))
+                    pawn_push(i, ind_from_coordinate({row-1, column-1}));
+            if(coordinate_is_legal({row-1, column+1}) && 
+                (is_white[ind_from_coordinate({row-1, column+1})] || (en_pessant.first == row-1 && en_pessant.second == column+1)))
+                    pawn_push(i, ind_from_coordinate({row-1, column+1}));
+            
+            if(!is_anything[i-8]) {
+                pawn_push(i, ind_from_coordinate({row-1, column}));
+                if(row==6 && !is_anything[i-16])
+                    S.push({i, i-16}); // pawn push useless, thus omited
             }
+        } 
     }
 
     const bitboard &turn_knight = is_piece[1 + 6 * turn];
@@ -253,32 +260,32 @@ stack<pair<int, int>> board::gen_moves() {
     const bitboard &turn_queen  = is_piece[4 + 6 * turn];
     const bitboard &turn_king   = is_piece[5 + 6 * turn];
 
-    for(int i=0; i<64; i++) 
-        if(turn_knight[i]) {
-                auto [row, column] = gen_coordinate(i);
+    bitboard copy = turn_knight;
+    for(int i=copy.get_first_one(); i>=0; i = copy.get_first_one()) {
+        copy.set_val(false, i);
+        auto [row, column] = gen_coordinate(i);
 
-                for(int ska1=-1; ska1<2; ska1+=2)
-                    for(int ska2=-1; ska2<2; ska2+=2) {
-                        if(coordinate_is_legal({row + 2 * ska1, column + 1 * ska2}) && 
-                            !is_color[turn][ind_from_coordinate({row + 2 * ska1, column + 1 * ska2})])
-                                S.push({i, ind_from_coordinate({row + 2 * ska1, column + 1 * ska2})});
-                        if(coordinate_is_legal({row + 1 * ska1, column + 2 * ska2}) && 
-                            !is_color[turn][ind_from_coordinate({row + 1 * ska1, column + 2 * ska2})])
-                                S.push({i, ind_from_coordinate({row + 1 * ska1, column + 2 * ska2})});
-                    }
-        }
+        for(int ska1=-1; ska1<2; ska1+=2)
+            for(int ska2=-1; ska2<2; ska2+=2) {
+                if(coordinate_is_legal({row + 2 * ska1, column + 1 * ska2}) && 
+                    !is_color[turn][ind_from_coordinate({row + 2 * ska1, column + 1 * ska2})])
+                        S.push({i, ind_from_coordinate({row + 2 * ska1, column + 1 * ska2})});
+                if(coordinate_is_legal({row + 1 * ska1, column + 2 * ska2}) && 
+                    !is_color[turn][ind_from_coordinate({row + 1 * ska1, column + 2 * ska2})])
+                        S.push({i, ind_from_coordinate({row + 1 * ska1, column + 2 * ska2})});
+            }
+    }
+    copy = turn_king;
+    for(int i=copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        auto [row, column] = gen_coordinate(i);
+        for(int dirx=-1; dirx<2; dirx++)
+            for(int diry=-1; diry<2; diry++)
+                if(coordinate_is_legal({row + diry, column + dirx}) && 
+                    !is_color[turn][ind_from_coordinate({row + diry, column + dirx})])
+                        S.push({i, ind_from_coordinate({row + diry, column + dirx})});
 
-    for(int i=0; i<64; i++){
-        if(turn_king[i]){
-            auto [row, column] = gen_coordinate(i);
-            for(int dirx=-1; dirx<2; dirx++)
-                for(int diry=-1; diry<2; diry++)
-                    if(coordinate_is_legal({row + diry, column + dirx}) && 
-                        !is_color[turn][ind_from_coordinate({row + diry, column + dirx})])
-                            S.push({i, ind_from_coordinate({row + diry, column + dirx})});
-
-            break;
-        }
+        break;
     }
     int i;
     pair<int, int> direction;
@@ -291,29 +298,30 @@ stack<pair<int, int>> board::gen_moves() {
                 go_into(coordinate);
         }
     };
-
-    for(i=0; i<64; i++) {
-
-        if(turn_bishop[i]) {
-            for(direction.first = -1; direction.first<2; direction.first+=2)
-                for(direction.second = -1; direction.second<2; direction.second+=2)
-                    go_into(gen_coordinate(i));
-        }
-
-        if(turn_rook[i]) {
-            for(direction.first = -1; direction.first<2; direction.first++)
-                for(direction.second = -1; direction.second<2; direction.second++)
-                    if(((bool) direction.first) ^ ((bool)direction.second))
-                        go_into(gen_coordinate(i));
-        }
-
-        if(turn_queen[i]) {
-            for(direction.first = -1; direction.first<2; direction.first++)
-                for(direction.second = -1; direction.second<2; direction.second++)
-                    if(direction.first != 0 || direction.second != 0)
-                        go_into(gen_coordinate(i));
-        }
+    copy = turn_bishop;
+    for(i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        for(direction.first = -1; direction.first<2; direction.first+=2)
+            for(direction.second = -1; direction.second<2; direction.second+=2)
+                go_into(gen_coordinate(i));
     }
+    copy = turn_rook;
+    for(i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        for(direction.first = -1; direction.first<2; direction.first++)
+            for(direction.second = -1; direction.second<2; direction.second++)
+                if(((bool)direction.first) ^ ((bool)direction.second))
+                    go_into(gen_coordinate(i));
+    }
+
+    copy = turn_queen;
+    for(i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+        copy.set_val(false, i);
+        for(direction.first = -1; direction.first<2; direction.first++)
+           for(direction.second = -1; direction.second<2; direction.second++)
+               if(direction.first != 0 || direction.second != 0)
+                   go_into(gen_coordinate(i));
+    }      
 
     stack<pair<int, int>> res;
 
@@ -340,6 +348,7 @@ stack<pair<int, int>> board::gen_moves() {
         if(is_legal()) res.push(top);
         undo_move(move);
     }
+
     if(ply_100 == 100) return {};
     if(turn == 0 && res.empty()) if(white_king & gen_attacked(!turn)) return {};
     if(turn == 1 && res.empty()) if(black_king & gen_attacked(!turn)) return {};

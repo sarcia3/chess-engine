@@ -12,6 +12,7 @@ public:
 
     void set_val(bool val, int i);
     bool operator[](int i) const;
+    int get_first_one() const;
 
     bitboard& operator&=(bitboard arg);
     bitboard& operator|=(bitboard arg);

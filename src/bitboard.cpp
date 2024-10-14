@@ -13,6 +13,10 @@ bool bitboard::operator[](int i) const {
     return (value >> i) & 1;
 }
 
+int bitboard::get_first_one() const {
+    return __builtin_ffsll(value) - 1;
+}
+
 bitboard& bitboard::operator&=(bitboard arg) {
     value &= arg.value;
     return *this;
