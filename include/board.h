@@ -66,7 +66,7 @@ class board {
         void update_is_anything_color();
 
         bitboard gen_attacked(int gen_turn) const;
-        stack<pair<int, int>> gen_moves();
+        stack<move> gen_moves();
 
         bool is_legal() const;
 

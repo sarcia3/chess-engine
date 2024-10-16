@@ -7,7 +7,7 @@ int board::perft(int depth, int org_depth) {
     auto moves = gen_moves();
     int res = 0;
     while(moves.size()){
-        auto move = move_from_pair(moves.top());
+        auto move = moves.top();
         moves.pop();
         make_move(move, false);
         auto perft_res = perft(depth-1, org_depth);

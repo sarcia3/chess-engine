@@ -198,7 +198,7 @@ bool board::is_legal() const{
     return true;
 };
 
-stack<pair<int, int>> board::gen_moves() {
+stack<board::move> board::gen_moves() {
     auto old = is_piece;
     stack<pair<int, int>> S;
 
@@ -323,21 +323,21 @@ stack<pair<int, int>> board::gen_moves() {
                    go_into(gen_coordinate(i));
     }      
 
-    stack<pair<int, int>> res;
+    stack<move> res;
 
     if(turn == 0 && !gen_attacked(!turn)[4]) {
         if(castle[0] && !((is_anything | gen_attacked(!turn)) & (96ULL))){
-            res.push({0, 0});
+            res.push(move_from_pair({0, 0}));
         }
         if(castle[1] && !(is_anything & 14ULL) && !(gen_attacked(!turn) & 12ULL)){
-            res.push({1, 1});
+            res.push(move_from_pair({1, 1}));
         }
     } else if(!gen_attacked(!turn)[60]){
         if(castle[2] && !((is_anything | gen_attacked(!turn)) & (0x6000000000000000ULL))){
-            res.push({2, 2});
+            res.push(move_from_pair({2, 2}));
         }
         if(castle[3] && (!(is_anything & 0xE00000000000000ULL)) && (!(gen_attacked(!turn) & 0xC00000000000000ULL))){
-            res.push({3, 3}); 
+            res.push(move_from_pair({3, 3})); 
         }
     }
 
@@ -345,7 +345,7 @@ stack<pair<int, int>> board::gen_moves() {
         auto top = S.top(); S.pop();
         auto move = move_from_pair(top);
         make_move(move, false);
-        if(is_legal()) res.push(top);
+        if(is_legal()) res.push(move);
         undo_move(move);
     }
 
@@ -516,46 +516,46 @@ set<string> board::print_moves() {
     cout << " (" << tmp.size() << ")\n";
     while(tmp.size()) {
         auto top = tmp.top(); tmp.pop();
-        if(top.first == top.second){
-            cout << (top.first % 2 ? "o-o-o\n" : "o-o\n");
-            (top.first % 2 ? res.insert("o-o-o") : res.insert("o-o"));
+        if(top.start_pos == top.end_pos){
+            cout << (top.start_pos % 2 ? "o-o-o\n" : "o-o\n");
+            (top.start_pos % 2 ? res.insert("o-o-o") : res.insert("o-o"));
             continue;
         }
-        if(top.first<0) {
-            string without_prom = (std::string(1, char(gen_coordinate(-top.first).second + 'a')) + 
-                      std::to_string(gen_coordinate(-top.first).first + 1) + '-' +
-                      std::string(1, char(gen_coordinate(top.second >> 2).second + 'a')) + 
-                      std::to_string(gen_coordinate(top.second >> 2).first + 1) + '=');
+        if(top.promotion_type != -1) {
+            string without_prom = (std::string(1, char(gen_coordinate(top.start_pos).second + 'a')) + 
+                      std::to_string(gen_coordinate(top.start_pos).first + 1) + '-' +
+                      std::string(1, char(gen_coordinate(top.end_pos).second + 'a')) + 
+                      std::to_string(gen_coordinate(top.end_pos).first + 1) + '=');
                       
-            if(top.second%4 == 0){
+            if(top.promotion_type == 1){
                 without_prom+=("N");
                 cout << without_prom << '\n';
                 res.insert(without_prom);
                 continue;
             }
-            if(top.second%4 == 1){
+            if(top.promotion_type == 2){
                 without_prom+=("B");
                 cout << without_prom << '\n';
                 res.insert(without_prom);
                 continue;
             }
-            if(top.second%4 == 2){
+            if(top.promotion_type == 3){
                 without_prom+=("R");
                 cout << without_prom << '\n';
                 res.insert(without_prom);
                 continue;
             }
-            if(top.second%4 == 3){
+            if(top.promotion_type == 4){
                 without_prom+=("Q");
                 cout << without_prom << '\n';
                 res.insert(without_prom);
                 continue;
             }
         }
-        string move = (std::string(1, char(gen_coordinate(top.first).second + 'a')) + 
-                      std::to_string(gen_coordinate(top.first).first + 1) + '-' +
-                      std::string(1, char(gen_coordinate(top.second).second + 'a')) + 
-                      std::to_string(gen_coordinate(top.second).first + 1));
+        string move = (std::string(1, char(gen_coordinate(top.start_pos).second + 'a')) + 
+                      std::to_string(gen_coordinate(top.start_pos).first + 1) + '-' +
+                      std::string(1, char(gen_coordinate(top.end_pos).second + 'a')) + 
+                      std::to_string(gen_coordinate(top.end_pos).first + 1));
 
         cout << move << '\n';
         res.insert(move);
