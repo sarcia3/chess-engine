@@ -14,7 +14,7 @@ bool bitboard::operator[](int i) const {
 }
 
 int bitboard::get_first_one() const {
-    return __builtin_ffsll(value) - 1;
+    return std::countr_zero(value);
 }
 
 bitboard& bitboard::operator&=(bitboard arg) {

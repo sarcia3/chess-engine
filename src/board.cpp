@@ -87,7 +87,7 @@ bitboard board::gen_attacked(int gen_turn) const {
 
     if(gen_turn == 0) {
         bitboard copy = white_pawn;
-        for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+        for(int i = copy.get_first_one(); i<64; i=copy.get_first_one()) {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
 
@@ -96,7 +96,7 @@ bitboard board::gen_attacked(int gen_turn) const {
         }
     } else {
         bitboard copy = black_pawn;
-        for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+        for(int i = copy.get_first_one(); i<64; i=copy.get_first_one()) {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
 
@@ -112,7 +112,7 @@ bitboard board::gen_attacked(int gen_turn) const {
     const bitboard &turn_king   = is_piece[5 + 6 * gen_turn];
 
     bitboard copy = turn_knight;
-    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+    for(int i = copy.get_first_one(); i<64; i=copy.get_first_one()) {
         copy.set_val(false, i);
         auto [row, column] = gen_coordinate(i);
 
@@ -135,7 +135,7 @@ bitboard board::gen_attacked(int gen_turn) const {
     };
 
     copy = turn_bishop;
-    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(int i = copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         for(direction.first = -1; direction.first<2; direction.first+=2)
             for(direction.second = -1; direction.second<2; direction.second+=2)
@@ -143,7 +143,7 @@ bitboard board::gen_attacked(int gen_turn) const {
     }
 
     copy = turn_rook;
-    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(int i = copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         for(direction.first = -1; direction.first<2; direction.first++)
             for(direction.second = -1; direction.second<2; direction.second++)
@@ -152,7 +152,7 @@ bitboard board::gen_attacked(int gen_turn) const {
     }
 
     copy = turn_queen;
-    for(int i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(int i = copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         for(direction.first = -1; direction.first<2; direction.first++)
            for(direction.second = -1; direction.second<2; direction.second++)
@@ -218,7 +218,7 @@ stack<pair<int, int>> board::gen_moves() {
     
     if(turn == 0) {
         bitboard copy = white_pawn;
-        for(int i=copy.get_first_one(); i>=0; i=copy.get_first_one()) {
+        for(int i=copy.get_first_one(); i<64; i=copy.get_first_one()) {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
             if(coordinate_is_legal({row+1, column-1}) && 
@@ -236,7 +236,7 @@ stack<pair<int, int>> board::gen_moves() {
         }
     } else {
         bitboard copy = black_pawn;
-        for(int i=copy.get_first_one(); i>=0; i = copy.get_first_one()) {
+        for(int i=copy.get_first_one(); i<64; i = copy.get_first_one()) {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
             if(coordinate_is_legal({row-1, column-1}) && 
@@ -261,7 +261,7 @@ stack<pair<int, int>> board::gen_moves() {
     const bitboard &turn_king   = is_piece[5 + 6 * turn];
 
     bitboard copy = turn_knight;
-    for(int i=copy.get_first_one(); i>=0; i = copy.get_first_one()) {
+    for(int i=copy.get_first_one(); i<64; i = copy.get_first_one()) {
         copy.set_val(false, i);
         auto [row, column] = gen_coordinate(i);
 
@@ -276,7 +276,7 @@ stack<pair<int, int>> board::gen_moves() {
             }
     }
     copy = turn_king;
-    for(int i=copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(int i=copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         auto [row, column] = gen_coordinate(i);
         for(int dirx=-1; dirx<2; dirx++)
@@ -299,14 +299,14 @@ stack<pair<int, int>> board::gen_moves() {
         }
     };
     copy = turn_bishop;
-    for(i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(i = copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         for(direction.first = -1; direction.first<2; direction.first+=2)
             for(direction.second = -1; direction.second<2; direction.second+=2)
                 go_into(gen_coordinate(i));
     }
     copy = turn_rook;
-    for(i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(i = copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         for(direction.first = -1; direction.first<2; direction.first++)
             for(direction.second = -1; direction.second<2; direction.second++)
@@ -315,7 +315,7 @@ stack<pair<int, int>> board::gen_moves() {
     }
 
     copy = turn_queen;
-    for(i = copy.get_first_one(); i>=0; i=copy.get_first_one()){
+    for(i = copy.get_first_one(); i<64; i=copy.get_first_one()){
         copy.set_val(false, i);
         for(direction.first = -1; direction.first<2; direction.first++)
            for(direction.second = -1; direction.second<2; direction.second++)
