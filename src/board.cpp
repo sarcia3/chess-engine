@@ -360,35 +360,35 @@ stack<board::move> board::gen_moves() {
 void board::make_move(const move &arg, bool real){
     castle &= ~arg.castle_disruptions;
     en_pessant = {-1, -1};
-    if(arg.start_pos == 0 && arg.end_pos == 0) {
-        white_king.set_val(false, ind_from_coordinate({0, 4}));
-        white_king.set_val(true, ind_from_coordinate({0, 6}));
-        white_rook.set_val(false, ind_from_coordinate({0, 7}));
-        white_rook.set_val(true, ind_from_coordinate({0, 5}));
-        castle[0] = 0;
-    }
-    if(arg.start_pos == 1 && arg.end_pos == 1) {
-        white_king.set_val(false, ind_from_coordinate({0, 4}));
-        white_king.set_val(true, ind_from_coordinate({0, 2}));
-        white_rook.set_val(false, ind_from_coordinate({0, 0}));
-        white_rook.set_val(true, ind_from_coordinate({0, 3}));
-        castle[1] = 0;
-    }
-    if(arg.start_pos == 2 && arg.end_pos == 2) {
-        black_king.set_val(false, ind_from_coordinate({7, 4}));
-        black_king.set_val(true, ind_from_coordinate({7, 6}));
-        black_rook.set_val(false, ind_from_coordinate({7, 7}));
-        black_rook.set_val(true, ind_from_coordinate({7, 5}));
-        castle[2] = 0;
-    }
-    if(arg.start_pos == 3 && arg.end_pos == 3) {
-        black_king.set_val(false, ind_from_coordinate({7, 4}));
-        black_king.set_val(true, ind_from_coordinate({7, 2}));
-        black_rook.set_val(false, ind_from_coordinate({7, 0}));
-        black_rook.set_val(true, ind_from_coordinate({7, 3}));
-        castle[3] = 0;
-    }
     if(arg.start_pos == arg.end_pos) {
+        if(arg.start_pos == 0 && arg.end_pos == 0) {
+            white_king.set_val(false, ind_from_coordinate({0, 4}));
+            white_king.set_val(true, ind_from_coordinate({0, 6}));
+            white_rook.set_val(false, ind_from_coordinate({0, 7}));
+            white_rook.set_val(true, ind_from_coordinate({0, 5}));
+            castle[0] = 0;
+        }
+        if(arg.start_pos == 1 && arg.end_pos == 1) {
+            white_king.set_val(false, ind_from_coordinate({0, 4}));
+            white_king.set_val(true, ind_from_coordinate({0, 2}));
+            white_rook.set_val(false, ind_from_coordinate({0, 0}));
+            white_rook.set_val(true, ind_from_coordinate({0, 3}));
+            castle[1] = 0;
+        }
+        if(arg.start_pos == 2 && arg.end_pos == 2) {
+            black_king.set_val(false, ind_from_coordinate({7, 4}));
+            black_king.set_val(true, ind_from_coordinate({7, 6}));
+            black_rook.set_val(false, ind_from_coordinate({7, 7}));
+            black_rook.set_val(true, ind_from_coordinate({7, 5}));
+            castle[2] = 0;
+        }
+        if(arg.start_pos == 3 && arg.end_pos == 3) {
+            black_king.set_val(false, ind_from_coordinate({7, 4}));
+            black_king.set_val(true, ind_from_coordinate({7, 2}));
+            black_rook.set_val(false, ind_from_coordinate({7, 0}));
+            black_rook.set_val(true, ind_from_coordinate({7, 3}));
+            castle[3] = 0;
+        }
         ply_100 = 0;
         ply++;
         turn ^= 1;
