@@ -175,6 +175,7 @@ bitboard board::gen_attacked(int gen_turn) const {
 
 bool board::is_legal() const{
     //1st check - is every square occupied by exactly zero or one piece
+    
     bitboard current = 0;
     for(const auto &elem : is_piece) 
         if(current & elem)
@@ -190,7 +191,7 @@ bool board::is_legal() const{
     if(popcount(white_king) != 1 || popcount(black_king) != 1)
         return false;
 
-
+        
     //4th check - king not in check
     if(gen_attacked(turn) & is_piece[11 - 6*turn])
         return false;
@@ -357,42 +358,47 @@ stack<board::move> board::gen_moves() {
     return res;
 }
 
+
+void board::update_iac(bool val, bool color, int i){
+    is_anything.set_val(val, i);
+    is_color[color].set_val(val, i);
+}
+
 void board::make_move(const move &arg, bool real){
     castle &= ~arg.castle_disruptions;
     en_pessant = {-1, -1};
     if(arg.start_pos == arg.end_pos) {
         if(arg.start_pos == 0 && arg.end_pos == 0) {
-            white_king.set_val(false, ind_from_coordinate({0, 4}));
-            white_king.set_val(true, ind_from_coordinate({0, 6}));
-            white_rook.set_val(false, ind_from_coordinate({0, 7}));
-            white_rook.set_val(true, ind_from_coordinate({0, 5}));
+            white_king.set_val(false, ind_from_coordinate({0, 4})); update_iac(false, turn, ind_from_coordinate({0, 4}));
+            white_king.set_val(true, ind_from_coordinate({0, 6}));  update_iac(true, turn, ind_from_coordinate({0, 6}));
+            white_rook.set_val(false, ind_from_coordinate({0, 7})); update_iac(false, turn, ind_from_coordinate({0, 7}));
+            white_rook.set_val(true, ind_from_coordinate({0, 5}));  update_iac(true, turn, ind_from_coordinate({0, 5}));
             castle[0] = 0;
         }
         if(arg.start_pos == 1 && arg.end_pos == 1) {
-            white_king.set_val(false, ind_from_coordinate({0, 4}));
-            white_king.set_val(true, ind_from_coordinate({0, 2}));
-            white_rook.set_val(false, ind_from_coordinate({0, 0}));
-            white_rook.set_val(true, ind_from_coordinate({0, 3}));
+            white_king.set_val(false, ind_from_coordinate({0, 4})); update_iac(false, turn, ind_from_coordinate({0, 4}));
+            white_king.set_val(true, ind_from_coordinate({0, 2}));  update_iac(true, turn, ind_from_coordinate({0, 2}));
+            white_rook.set_val(false, ind_from_coordinate({0, 0})); update_iac(false, turn, ind_from_coordinate({0, 0}));
+            white_rook.set_val(true, ind_from_coordinate({0, 3}));  update_iac(true, turn, ind_from_coordinate({0, 3}));
             castle[1] = 0;
         }
         if(arg.start_pos == 2 && arg.end_pos == 2) {
-            black_king.set_val(false, ind_from_coordinate({7, 4}));
-            black_king.set_val(true, ind_from_coordinate({7, 6}));
-            black_rook.set_val(false, ind_from_coordinate({7, 7}));
-            black_rook.set_val(true, ind_from_coordinate({7, 5}));
+            black_king.set_val(false, ind_from_coordinate({7, 4})); update_iac(false, turn, ind_from_coordinate({7, 4}));
+            black_king.set_val(true, ind_from_coordinate({7, 6}));  update_iac(true, turn, ind_from_coordinate({7, 6}));
+            black_rook.set_val(false, ind_from_coordinate({7, 7})); update_iac(false, turn, ind_from_coordinate({7, 7}));
+            black_rook.set_val(true, ind_from_coordinate({7, 5}));  update_iac(true, turn, ind_from_coordinate({7, 5}));
             castle[2] = 0;
         }
         if(arg.start_pos == 3 && arg.end_pos == 3) {
-            black_king.set_val(false, ind_from_coordinate({7, 4}));
-            black_king.set_val(true, ind_from_coordinate({7, 2}));
-            black_rook.set_val(false, ind_from_coordinate({7, 0}));
-            black_rook.set_val(true, ind_from_coordinate({7, 3}));
+            black_king.set_val(false, ind_from_coordinate({7, 4})); update_iac(false, turn, ind_from_coordinate({7, 4}));
+            black_king.set_val(true, ind_from_coordinate({7, 2}));  update_iac(true, turn, ind_from_coordinate({7, 2}));
+            black_rook.set_val(false, ind_from_coordinate({7, 0})); update_iac(false, turn, ind_from_coordinate({7, 0}));
+            black_rook.set_val(true, ind_from_coordinate({7, 3}));  update_iac(true, turn, ind_from_coordinate({7, 3}));
             castle[3] = 0;
         }
         ply_100 = 0;
         ply++;
         turn ^= 1;
-        update_is_anything_color();
         if(real) update_state();
         return;
     }
@@ -403,23 +409,22 @@ void board::make_move(const move &arg, bool real){
 
     if(arg.promotion_type != -1) {
 
-        is_piece[arg.piece_type].set_val(false, arg.start_pos);
+        is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
         if(arg.capture_piece != -1)
-            is_piece[arg.capture_piece].set_val(false, arg.end_pos); 
+            { is_piece[arg.capture_piece].set_val(false, arg.end_pos); update_iac(false, !turn, arg.end_pos); }
         
-        is_piece[arg.promotion_type].set_val(true, arg.end_pos);
+        is_piece[arg.promotion_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
         ply_100 = 0;
         ply++;
         turn^=1;
-        update_is_anything_color();
         if(real) update_state();
         return;
     }
 
     if(arg.capture_position != -1 && arg.capture_position != arg.end_pos) { // en pessant
-        is_piece[arg.capture_piece].set_val(false, arg.capture_position);
-        is_piece[arg.piece_type].set_val(false, arg.start_pos);
-        is_piece[arg.piece_type].set_val(true, arg.end_pos);
+        is_piece[arg.capture_piece].set_val(false, arg.capture_position); update_iac(false, !turn, arg.capture_position);
+        is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
+        is_piece[arg.piece_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
         ply_100 = 0;
         ply++;
         turn ^= 1;
@@ -427,19 +432,18 @@ void board::make_move(const move &arg, bool real){
         if(arg.piece_type == 6*turn && abs(arg.start_pos-arg.end_pos) == 16) 
             en_pessant = gen_coordinate((arg.start_pos+arg.end_pos)/2);
 
-        is_piece[arg.piece_type].set_val(false, arg.start_pos);
+        is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
 
         if(arg.capture_piece != -1) { 
-            is_piece[arg.capture_piece].set_val(false, arg.end_pos); 
+            is_piece[arg.capture_piece].set_val(false, arg.end_pos); update_iac(false, !turn, arg.end_pos);
             ply_100 = -1; 
         }
 
-        is_piece[arg.piece_type].set_val(true, arg.end_pos);
+        is_piece[arg.piece_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
         ply_100++;
         ply++;
         turn^=1;
     }
-    update_is_anything_color();
     if(real) update_state();
 }
 
@@ -452,44 +456,50 @@ void board::make_move(const pair<int, int> &start, const pair<int, int> &end, bo
 }
 
 void board::undo_move(const board::move &arg) {
+    turn ^= 1;
     castle |= arg.castle_disruptions; 
     en_pessant = arg.old_en_pessant;
-    if(arg.promotion_type != -1) is_piece[arg.promotion_type].set_val(false, arg.end_pos);
-    if(arg.capture_piece != -1) is_piece[arg.capture_piece].set_val(true, arg.capture_position);
+    
     if(arg.start_pos == arg.end_pos) {
         if(arg.start_pos == 0) {
-            white_king.set_val(true, 4);
-            white_king.set_val(false, 6);
-            white_rook.set_val(true, 7);
-            white_rook.set_val(false, 5);
+            white_king.set_val(true, 4);  update_iac(true, turn, 4);
+            white_king.set_val(false, 6); update_iac(false, turn, 6);
+            white_rook.set_val(true, 7);  update_iac(true, turn, 7);
+            white_rook.set_val(false, 5); update_iac(false, turn, 5);
         }
         if(arg.start_pos == 1) {
-            white_king.set_val(true, 4);
-            white_king.set_val(false, 2);
-            white_rook.set_val(true, 0);
-            white_rook.set_val(false, 3);
+            white_king.set_val(true, 4);  update_iac(true, turn, 4);
+            white_king.set_val(false, 2); update_iac(false, turn, 2);
+            white_rook.set_val(true, 0);  update_iac(true, turn, 0);
+            white_rook.set_val(false, 3); update_iac(false, turn, 3);
         }
         if(arg.start_pos == 2) {
-            black_king.set_val(true, 56+4);
-            black_king.set_val(false, 56+6);
-            black_rook.set_val(true, 56+7);
-            black_rook.set_val(false, 56+5);
+            black_king.set_val(true, 56+4);  update_iac(true, turn, 56+4);
+            black_king.set_val(false, 56+6); update_iac(false, turn, 56+6);
+            black_rook.set_val(true, 56+7);  update_iac(true, turn, 56+7);
+            black_rook.set_val(false, 56+5); update_iac(false, turn, 56+5);
         }
         if(arg.start_pos == 3) {
-            black_king.set_val(true, 56+4);
-            black_king.set_val(false, 56+2);
-            black_rook.set_val(true, 56+0);
-            black_rook.set_val(false, 56+3);
+            black_king.set_val(true, 56+4);  update_iac(true, turn, 56+4);
+            black_king.set_val(false, 56+2); update_iac(false, turn, 56+2);
+            black_rook.set_val(true, 56+0);  update_iac(true, turn, 56+0);
+            black_rook.set_val(false, 56+3); update_iac(false, turn, 56+3);
         }
     } else {
-        is_piece[arg.piece_type].set_val(false, arg.end_pos);
-        is_piece[arg.piece_type].set_val(true, arg.start_pos);
+        is_piece[arg.piece_type].set_val(false, arg.end_pos);  update_iac(false, turn, arg.end_pos);
+        is_piece[arg.piece_type].set_val(true, arg.start_pos); update_iac(true, turn, arg.start_pos);
     }
-    turn ^= 1;
+
+    if(arg.promotion_type != -1) 
+        { is_piece[arg.promotion_type].set_val(false, arg.end_pos); update_iac(false, turn, arg.end_pos); }
+
+    if(arg.capture_piece != -1) 
+        { is_piece[arg.capture_piece].set_val(true, arg.capture_position); update_iac(true, !turn, arg.capture_position); }
+
     ply_100 = arg.old_ply_100;
     ply--;
-    update_is_anything_color();
 };
+
 void board::update_state(){
     if(ply_100 == 100) {current_state = draw_50_rule; return;}
     if(turn == 0) {if(black_king & gen_attacked(turn)) {current_state = white_won; return;}}

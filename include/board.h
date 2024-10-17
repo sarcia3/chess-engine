@@ -70,6 +70,8 @@ class board {
 
         bool is_legal() const;
 
+        void update_iac(bool val, bool color, int i);
+
         void make_move(const move &arg, bool real);
         void make_move(const pair<int, int> &arg, bool real);
         void make_move(const pair<int, int> &start, const pair<int, int> &end, bool real);
@@ -77,6 +79,8 @@ class board {
         //we want to update the game state
         //if we had always tried to update we would have an infinite loop
         void undo_move(const move &arg);
+
+
 
 
     public: 
