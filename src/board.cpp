@@ -83,7 +83,11 @@ void board::update_is_anything_color() {
 }
 
 bitboard board::gen_attacked(int gen_turn) const {
-    stack<pair<int, int>> S;
+    bitboard res = 0;
+
+    auto set_if_legal = [&](const pair<int, int> &arg) {
+        if(coordinate_is_legal(arg)) res.set_val(true, ind_from_coordinate(arg));
+    };
 
     if(gen_turn == 0) {
         bitboard copy = white_pawn;
@@ -91,8 +95,8 @@ bitboard board::gen_attacked(int gen_turn) const {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
 
-            S.push({row+1, column-1});
-            S.push({row+1, column+1});
+            set_if_legal({row+1, column-1});
+            set_if_legal({row+1, column+1});
         }
     } else {
         bitboard copy = black_pawn;
@@ -100,8 +104,8 @@ bitboard board::gen_attacked(int gen_turn) const {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
 
-            S.push({row-1, column-1});
-            S.push({row-1, column+1});
+            set_if_legal({row-1, column-1});
+            set_if_legal({row-1, column+1});
         }
     }
 
@@ -118,8 +122,8 @@ bitboard board::gen_attacked(int gen_turn) const {
 
         for(int dir1=-1; dir1<2; dir1+=2)
             for(int dir2=-1; dir2<2; dir2+=2) {
-                S.push({row + 2 * dir1, column + 1 * dir2});
-                S.push({row + 1 * dir1, column + 2 * dir2});
+                set_if_legal({row + 2 * dir1, column + 1 * dir2});
+                set_if_legal({row + 1 * dir1, column + 2 * dir2});
             }
     }
 
@@ -128,7 +132,7 @@ bitboard board::gen_attacked(int gen_turn) const {
         coordinate.first += direction.first;
         coordinate.second += direction.second;
         if(coordinate_is_legal(coordinate)){
-            S.push(coordinate);
+            set_if_legal(coordinate);
             if(!((is_anything >> ind_from_coordinate(coordinate))&1))
                 go_into(coordinate);
         }
@@ -158,16 +162,6 @@ bitboard board::gen_attacked(int gen_turn) const {
            for(direction.second = -1; direction.second<2; direction.second++)
                if(direction.first != 0 || direction.second != 0)
                    go_into(gen_coordinate(i));
-    }
-
-    bitboard res = 0;
-
-    while(S.size()) {
-        if(coordinate_is_legal(S.top())) {
-            int i = ind_from_coordinate(S.top());
-            res.set_val(true, i);
-        }
-        S.pop();
     }
 
     return res;
