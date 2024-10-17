@@ -361,85 +361,58 @@ void board::update_iac(bool val, bool color, int i){
 }
 
 void board::make_move(const move &arg, bool real){
-    castle &= ~arg.castle_disruptions;
-    en_pessant = {-1, -1};
+    auto set_val_update_iac = [&] (bitboard &bb, bool val, bool color, int ind) {
+        bb.set_val(val, ind);
+        is_anything.set_val(val, ind);
+        is_color[color].set_val(val, ind);
+    };
+
+    if(arg.promotion_type != -1)
+        { set_val_update_iac(is_piece[arg.promotion_type], true, turn, arg.end_pos); ply_100=0; }
+
+    if(arg.capture_piece != -1)
+        { set_val_update_iac(is_piece[arg.capture_piece], false, !turn, arg.capture_position); ply_100=0; }
+
+
     if(arg.start_pos == arg.end_pos) {
-        if(arg.start_pos == 0 && arg.end_pos == 0) {
-            white_king.set_val(false, ind_from_coordinate({0, 4})); update_iac(false, turn, ind_from_coordinate({0, 4}));
-            white_king.set_val(true, ind_from_coordinate({0, 6}));  update_iac(true, turn, ind_from_coordinate({0, 6}));
-            white_rook.set_val(false, ind_from_coordinate({0, 7})); update_iac(false, turn, ind_from_coordinate({0, 7}));
-            white_rook.set_val(true, ind_from_coordinate({0, 5}));  update_iac(true, turn, ind_from_coordinate({0, 5}));
-            castle[0] = 0;
-        }
-        if(arg.start_pos == 1 && arg.end_pos == 1) {
-            white_king.set_val(false, ind_from_coordinate({0, 4})); update_iac(false, turn, ind_from_coordinate({0, 4}));
-            white_king.set_val(true, ind_from_coordinate({0, 2}));  update_iac(true, turn, ind_from_coordinate({0, 2}));
-            white_rook.set_val(false, ind_from_coordinate({0, 0})); update_iac(false, turn, ind_from_coordinate({0, 0}));
-            white_rook.set_val(true, ind_from_coordinate({0, 3}));  update_iac(true, turn, ind_from_coordinate({0, 3}));
-            castle[1] = 0;
-        }
-        if(arg.start_pos == 2 && arg.end_pos == 2) {
-            black_king.set_val(false, ind_from_coordinate({7, 4})); update_iac(false, turn, ind_from_coordinate({7, 4}));
-            black_king.set_val(true, ind_from_coordinate({7, 6}));  update_iac(true, turn, ind_from_coordinate({7, 6}));
-            black_rook.set_val(false, ind_from_coordinate({7, 7})); update_iac(false, turn, ind_from_coordinate({7, 7}));
-            black_rook.set_val(true, ind_from_coordinate({7, 5}));  update_iac(true, turn, ind_from_coordinate({7, 5}));
-            castle[2] = 0;
-        }
-        if(arg.start_pos == 3 && arg.end_pos == 3) {
-            black_king.set_val(false, ind_from_coordinate({7, 4})); update_iac(false, turn, ind_from_coordinate({7, 4}));
-            black_king.set_val(true, ind_from_coordinate({7, 2}));  update_iac(true, turn, ind_from_coordinate({7, 2}));
-            black_rook.set_val(false, ind_from_coordinate({7, 0})); update_iac(false, turn, ind_from_coordinate({7, 0}));
-            black_rook.set_val(true, ind_from_coordinate({7, 3}));  update_iac(true, turn, ind_from_coordinate({7, 3}));
-            castle[3] = 0;
-        }
         ply_100 = 0;
-        ply++;
-        turn ^= 1;
-        if(real) update_state();
-        return;
-    }
+        if(arg.start_pos == 0) {
+            set_val_update_iac(white_king, false, turn, 4);
+            set_val_update_iac(white_king, true, turn, 6);
+            set_val_update_iac(white_rook, false, turn, 7);
+            set_val_update_iac(white_rook, true, turn, 5);
+        }
+        if(arg.start_pos == 1) {
+            set_val_update_iac(white_king, false, turn, 4);
+            set_val_update_iac(white_king, true, turn, 2);
+            set_val_update_iac(white_rook, false, turn, 0);
+            set_val_update_iac(white_rook, true, turn, 3);
+        }
 
-
-    auto [start_row, start_col] = gen_coordinate(arg.start_pos);
-    auto [end_row, end_col] = gen_coordinate(arg.end_pos);
-
-    if(arg.promotion_type != -1) {
-
-        is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
-        if(arg.capture_piece != -1)
-            { is_piece[arg.capture_piece].set_val(false, arg.end_pos); update_iac(false, !turn, arg.end_pos); }
-
-        is_piece[arg.promotion_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
-        ply_100 = 0;
-        ply++;
-        turn^=1;
-        if(real) update_state();
-        return;
-    }
-
-    if(arg.capture_position != -1 && arg.capture_position != arg.end_pos) { // en pessant
-        is_piece[arg.capture_piece].set_val(false, arg.capture_position); update_iac(false, !turn, arg.capture_position);
-        is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
-        is_piece[arg.piece_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
-        ply_100 = 0;
-        ply++;
-        turn ^= 1;
+        if(arg.start_pos == 2) {
+            set_val_update_iac(black_king, false, turn, 56+4);
+            set_val_update_iac(black_king, true, turn, 56+6);
+            set_val_update_iac(black_rook, false, turn, 56+7);
+            set_val_update_iac(black_rook, true, turn, 56+5);
+        }
+        if(arg.start_pos == 3) {
+            set_val_update_iac(black_king, false, turn, 56+4);
+            set_val_update_iac(black_king, true, turn, 56+2);
+            set_val_update_iac(black_rook, false, turn, 56+0);
+            set_val_update_iac(black_rook, true, turn, 56+3);
+        }
+        ply_100=0;
     } else {
-        if(arg.piece_type == 6*turn && abs(arg.start_pos-arg.end_pos) == 16)
-            en_pessant = gen_coordinate((arg.start_pos+arg.end_pos)/2);
-
-        is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
-
-        if(arg.capture_piece != -1) {
-            is_piece[arg.capture_piece].set_val(false, arg.end_pos); update_iac(false, !turn, arg.end_pos);
-            ply_100 = -1;
-        }
-
-        is_piece[arg.piece_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
-        ply_100++;
-        ply++;
-        turn^=1;
+        set_val_update_iac(is_piece[arg.piece_type], false, turn, arg.start_pos);
+        if(arg.promotion_type == -1) set_val_update_iac(is_piece[arg.piece_type], true, turn, arg.end_pos);
     }
+
+    if(arg.piece_type == 6*turn && abs(arg.start_pos - arg.end_pos) == 16) 
+        en_pessant = gen_coordinate((arg.start_pos + arg.end_pos)/2); //we won't get an error caused by rounding-up
+    else en_pessant = {-1, -1};
+    ply_100++;
+    ply++;
+    turn^=1;
     if(real) update_state();
 }
 
