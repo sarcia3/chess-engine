@@ -70,6 +70,8 @@ class board {
 
         bool is_legal() const;
 
+        bool is_legal_after_move() const;
+
         void update_iac(bool val, bool color, int i);
 
         void make_move(const move &arg, bool real);

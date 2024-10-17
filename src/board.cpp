@@ -8,29 +8,29 @@
 #include <array>
 #include <bit>
 #include <iostream>
-#include <cmath> 
+#include <cmath>
 #include <set>
 
 using namespace std;
 using namespace board_utils;
 
-board::board() 
+board::board()
     : is_piece{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
       white_pawn(is_piece[0]),
-      white_knight(is_piece[1]), 
-      white_bishop(is_piece[2]), 
-      white_rook(is_piece[3]), 
-      white_queen(is_piece[4]), 
-      white_king(is_piece[5]), 
-      black_pawn(is_piece[6]), 
-      black_knight(is_piece[7]), 
-      black_bishop(is_piece[8]), 
-      black_rook(is_piece[9]), 
-      black_queen(is_piece[10]), 
+      white_knight(is_piece[1]),
+      white_bishop(is_piece[2]),
+      white_rook(is_piece[3]),
+      white_queen(is_piece[4]),
+      white_king(is_piece[5]),
+      black_pawn(is_piece[6]),
+      black_knight(is_piece[7]),
+      black_bishop(is_piece[8]),
+      black_rook(is_piece[9]),
+      black_queen(is_piece[10]),
       black_king(is_piece[11]),
-      is_anything(0), 
+      is_anything(0),
       is_color{0, 0},
-      is_white(is_color[0]), 
+      is_white(is_color[0]),
       is_black(is_color[1]),
       current_state(undecided)
 {
@@ -41,19 +41,19 @@ board::board()
     en_pessant = {-1, -1};
 }
 
-board::board(const board& to_copy) 
+board::board(const board& to_copy)
     : is_piece(to_copy.is_piece),
       white_pawn(is_piece[0]),
-      white_knight(is_piece[1]), 
-      white_bishop(is_piece[2]), 
-      white_rook(is_piece[3]), 
-      white_queen(is_piece[4]), 
-      white_king(is_piece[5]), 
-      black_pawn(is_piece[6]), 
-      black_knight(is_piece[7]), 
-      black_bishop(is_piece[8]), 
-      black_rook(is_piece[9]), 
-      black_queen(is_piece[10]), 
+      white_knight(is_piece[1]),
+      white_bishop(is_piece[2]),
+      white_rook(is_piece[3]),
+      white_queen(is_piece[4]),
+      white_king(is_piece[5]),
+      black_pawn(is_piece[6]),
+      black_knight(is_piece[7]),
+      black_bishop(is_piece[8]),
+      black_rook(is_piece[9]),
+      black_queen(is_piece[10]),
       black_king(is_piece[11]),
       is_anything(to_copy.is_anything),
       is_color(to_copy.is_color),
@@ -102,7 +102,7 @@ bitboard board::gen_attacked(int gen_turn) const {
 
             S.push({row-1, column-1});
             S.push({row-1, column+1});
-        } 
+        }
     }
 
     const bitboard &turn_knight = is_piece[1 + 6 * gen_turn];
@@ -158,7 +158,7 @@ bitboard board::gen_attacked(int gen_turn) const {
            for(direction.second = -1; direction.second<2; direction.second++)
                if(direction.first != 0 || direction.second != 0)
                    go_into(gen_coordinate(i));
-    }      
+    }
 
     bitboard res = 0;
 
@@ -177,7 +177,7 @@ bool board::is_legal() const{
     //1st check - is every square occupied by exactly zero or one piece
     
     bitboard current = 0;
-    for(const auto &elem : is_piece) 
+    for(const auto &elem : is_piece)
         if(current & elem)
             return false;
         else current |= elem;
@@ -186,12 +186,11 @@ bool board::is_legal() const{
     if(0xFF000000000000FF & (white_pawn | black_pawn))
         return false;
 
-    
-    //3rd check - exactly one king of each color exists 
+
+    //3rd check - exactly one king of each color exists
     if(popcount(white_king) != 1 || popcount(black_king) != 1)
         return false;
 
-        
     //4th check - king not in check
     if(gen_attacked(turn) & is_piece[11 - 6*turn])
         return false;
@@ -199,6 +198,9 @@ bool board::is_legal() const{
     return true;
 };
 
+bool board::is_legal_after_move() const{
+    return !(gen_attacked(turn) & is_piece[11 - 6*turn]);
+};
 stack<board::move> board::gen_moves() {
     auto old = is_piece;
     stack<pair<int, int>> S;
@@ -216,19 +218,19 @@ stack<board::move> board::gen_moves() {
             S.push({start, end});
         }
     };
-    
+
     if(turn == 0) {
         bitboard copy = white_pawn;
         for(int i=copy.get_first_one(); i<64; i=copy.get_first_one()) {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
-            if(coordinate_is_legal({row+1, column-1}) && 
+            if(coordinate_is_legal({row+1, column-1}) &&
                 ((is_black[ind_from_coordinate({row+1, column-1})]) || (en_pessant.first == row+1 && en_pessant.second == column-1)))
                    pawn_push(i, ind_from_coordinate({row+1, column-1}));
-            if(coordinate_is_legal({row+1, column+1}) && 
+            if(coordinate_is_legal({row+1, column+1}) &&
                 (is_black[ind_from_coordinate({row+1, column+1})] || (en_pessant.first == row+1 && en_pessant.second == column+1)))
                     pawn_push(i, ind_from_coordinate({row+1, column+1}));
-            
+
             if(!is_anything[i+8]) {
                 pawn_push(i, i+8);
                 if(row==1 && !is_anything[i+16])
@@ -240,19 +242,19 @@ stack<board::move> board::gen_moves() {
         for(int i=copy.get_first_one(); i<64; i = copy.get_first_one()) {
             copy.set_val(false, i);
             auto [row, column] = gen_coordinate(i);
-            if(coordinate_is_legal({row-1, column-1}) && 
+            if(coordinate_is_legal({row-1, column-1}) &&
                 (is_white[ind_from_coordinate({row-1, column-1})] || (en_pessant.first == row-1 && en_pessant.second == column-1)))
                     pawn_push(i, ind_from_coordinate({row-1, column-1}));
-            if(coordinate_is_legal({row-1, column+1}) && 
+            if(coordinate_is_legal({row-1, column+1}) &&
                 (is_white[ind_from_coordinate({row-1, column+1})] || (en_pessant.first == row-1 && en_pessant.second == column+1)))
                     pawn_push(i, ind_from_coordinate({row-1, column+1}));
-            
+
             if(!is_anything[i-8]) {
                 pawn_push(i, ind_from_coordinate({row-1, column}));
                 if(row==6 && !is_anything[i-16])
                     S.push({i, i-16}); // pawn push useless, thus omited
             }
-        } 
+        }
     }
 
     const bitboard &turn_knight = is_piece[1 + 6 * turn];
@@ -268,10 +270,10 @@ stack<board::move> board::gen_moves() {
 
         for(int ska1=-1; ska1<2; ska1+=2)
             for(int ska2=-1; ska2<2; ska2+=2) {
-                if(coordinate_is_legal({row + 2 * ska1, column + 1 * ska2}) && 
+                if(coordinate_is_legal({row + 2 * ska1, column + 1 * ska2}) &&
                     !is_color[turn][ind_from_coordinate({row + 2 * ska1, column + 1 * ska2})])
                         S.push({i, ind_from_coordinate({row + 2 * ska1, column + 1 * ska2})});
-                if(coordinate_is_legal({row + 1 * ska1, column + 2 * ska2}) && 
+                if(coordinate_is_legal({row + 1 * ska1, column + 2 * ska2}) &&
                     !is_color[turn][ind_from_coordinate({row + 1 * ska1, column + 2 * ska2})])
                         S.push({i, ind_from_coordinate({row + 1 * ska1, column + 2 * ska2})});
             }
@@ -282,7 +284,7 @@ stack<board::move> board::gen_moves() {
         auto [row, column] = gen_coordinate(i);
         for(int dirx=-1; dirx<2; dirx++)
             for(int diry=-1; diry<2; diry++)
-                if(coordinate_is_legal({row + diry, column + dirx}) && 
+                if(coordinate_is_legal({row + diry, column + dirx}) &&
                     !is_color[turn][ind_from_coordinate({row + diry, column + dirx})])
                         S.push({i, ind_from_coordinate({row + diry, column + dirx})});
 
@@ -322,7 +324,7 @@ stack<board::move> board::gen_moves() {
            for(direction.second = -1; direction.second<2; direction.second++)
                if(direction.first != 0 || direction.second != 0)
                    go_into(gen_coordinate(i));
-    }      
+    }
 
     stack<move> res;
 
@@ -338,7 +340,7 @@ stack<board::move> board::gen_moves() {
             res.push(move_from_pair({2, 2}));
         }
         if(castle[3] && (!(is_anything & 0xE00000000000000ULL)) && (!(gen_attacked(!turn) & 0xC00000000000000ULL))){
-            res.push(move_from_pair({3, 3})); 
+            res.push(move_from_pair({3, 3}));
         }
     }
 
@@ -346,7 +348,7 @@ stack<board::move> board::gen_moves() {
         auto top = S.top(); S.pop();
         auto move = move_from_pair(top);
         make_move(move, false);
-        if(is_legal()) res.push(move);
+        if(is_legal_after_move()) res.push(move);
         undo_move(move);
     }
 
@@ -412,7 +414,7 @@ void board::make_move(const move &arg, bool real){
         is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
         if(arg.capture_piece != -1)
             { is_piece[arg.capture_piece].set_val(false, arg.end_pos); update_iac(false, !turn, arg.end_pos); }
-        
+
         is_piece[arg.promotion_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
         ply_100 = 0;
         ply++;
@@ -429,14 +431,14 @@ void board::make_move(const move &arg, bool real){
         ply++;
         turn ^= 1;
     } else {
-        if(arg.piece_type == 6*turn && abs(arg.start_pos-arg.end_pos) == 16) 
+        if(arg.piece_type == 6*turn && abs(arg.start_pos-arg.end_pos) == 16)
             en_pessant = gen_coordinate((arg.start_pos+arg.end_pos)/2);
 
         is_piece[arg.piece_type].set_val(false, arg.start_pos); update_iac(false, turn, arg.start_pos);
 
-        if(arg.capture_piece != -1) { 
+        if(arg.capture_piece != -1) {
             is_piece[arg.capture_piece].set_val(false, arg.end_pos); update_iac(false, !turn, arg.end_pos);
-            ply_100 = -1; 
+            ply_100 = -1;
         }
 
         is_piece[arg.piece_type].set_val(true, arg.end_pos); update_iac(true, turn, arg.end_pos);
@@ -457,9 +459,9 @@ void board::make_move(const pair<int, int> &start, const pair<int, int> &end, bo
 
 void board::undo_move(const board::move &arg) {
     turn ^= 1;
-    castle |= arg.castle_disruptions; 
+    castle |= arg.castle_disruptions;
     en_pessant = arg.old_en_pessant;
-    
+
     if(arg.start_pos == arg.end_pos) {
         if(arg.start_pos == 0) {
             white_king.set_val(true, 4);  update_iac(true, turn, 4);
@@ -490,10 +492,10 @@ void board::undo_move(const board::move &arg) {
         is_piece[arg.piece_type].set_val(true, arg.start_pos); update_iac(true, turn, arg.start_pos);
     }
 
-    if(arg.promotion_type != -1) 
+    if(arg.promotion_type != -1)
         { is_piece[arg.promotion_type].set_val(false, arg.end_pos); update_iac(false, turn, arg.end_pos); }
 
-    if(arg.capture_piece != -1) 
+    if(arg.capture_piece != -1)
         { is_piece[arg.capture_piece].set_val(true, arg.capture_position); update_iac(true, !turn, arg.capture_position); }
 
     ply_100 = arg.old_ply_100;
@@ -532,11 +534,11 @@ set<string> board::print_moves() {
             continue;
         }
         if(top.promotion_type != -1) {
-            string without_prom = (std::string(1, char(gen_coordinate(top.start_pos).second + 'a')) + 
+            string without_prom = (std::string(1, char(gen_coordinate(top.start_pos).second + 'a')) +
                       std::to_string(gen_coordinate(top.start_pos).first + 1) + '-' +
-                      std::string(1, char(gen_coordinate(top.end_pos).second + 'a')) + 
+                      std::string(1, char(gen_coordinate(top.end_pos).second + 'a')) +
                       std::to_string(gen_coordinate(top.end_pos).first + 1) + '=');
-                      
+
             if(top.promotion_type == 1){
                 without_prom+=("N");
                 cout << without_prom << '\n';
@@ -562,9 +564,9 @@ set<string> board::print_moves() {
                 continue;
             }
         }
-        string move = (std::string(1, char(gen_coordinate(top.start_pos).second + 'a')) + 
+        string move = (std::string(1, char(gen_coordinate(top.start_pos).second + 'a')) +
                       std::to_string(gen_coordinate(top.start_pos).first + 1) + '-' +
-                      std::string(1, char(gen_coordinate(top.end_pos).second + 'a')) + 
+                      std::string(1, char(gen_coordinate(top.end_pos).second + 'a')) +
                       std::to_string(gen_coordinate(top.end_pos).first + 1));
 
         cout << move << '\n';
@@ -591,33 +593,33 @@ void board::user_move(set<string> legal){
         if(s.back() == 'Q') piece = 3;
         make_move({-ind_from_coordinate({s[1]-'1', s[0]-'a'}), (ind_from_coordinate({s[4]-'1', s[3]-'a'})<<2) + piece}, true);
         return;
-    } 
+    }
     make_move({s[1]-'1', s[0]-'a'}, {s[4]-'1', s[3]-'a'}, true);
 }
 
-board::board (const string &fen) 
+board::board (const string &fen)
     : is_piece{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
       white_pawn(is_piece[0]),
-      white_knight(is_piece[1]), 
-      white_bishop(is_piece[2]), 
-      white_rook(is_piece[3]), 
-      white_queen(is_piece[4]), 
-      white_king(is_piece[5]), 
-      black_pawn(is_piece[6]), 
-      black_knight(is_piece[7]), 
-      black_bishop(is_piece[8]), 
-      black_rook(is_piece[9]), 
-      black_queen(is_piece[10]), 
+      white_knight(is_piece[1]),
+      white_bishop(is_piece[2]),
+      white_rook(is_piece[3]),
+      white_queen(is_piece[4]),
+      white_king(is_piece[5]),
+      black_pawn(is_piece[6]),
+      black_knight(is_piece[7]),
+      black_bishop(is_piece[8]),
+      black_rook(is_piece[9]),
+      black_queen(is_piece[10]),
       black_king(is_piece[11]),
-      is_anything(0), 
+      is_anything(0),
       is_color{0, 0},
-      is_white(is_color[0]), 
+      is_white(is_color[0]),
       is_black(is_color[1]),
       current_state(undecided)
 {
     constexpr array<int, 128> parse = []() {
         array<int, 128> map{};
-        
+
         map['P'] = 0;
         map['N'] = 1;
         map['B'] = 2;
@@ -630,7 +632,7 @@ board::board (const string &fen)
         map['r'] = 9;
         map['q'] = 10;
         map['k'] = 11;
-        
+
         return map;
     }();
 
@@ -640,12 +642,12 @@ board::board (const string &fen)
         for(; fen[fen_pos] != '/' && fen[fen_pos] != ' '; fen_pos++) {
             if(fen[fen_pos] >= '0' && fen[fen_pos] <= '9')
                 i += fen[fen_pos] - '0';
-            else 
+            else
                 is_piece[parse[fen[fen_pos]]].set_val(true, ind_from_coordinate({j, i++}));
         }
         fen_pos++;
     }
-    
+
     turn = (fen[fen_pos] != 'w');
 
     fen_pos++;
@@ -662,9 +664,9 @@ board::board (const string &fen)
     } else fen_pos++;
 
     fen_pos++;
-    if(fen[fen_pos] != '-') 
+    if(fen[fen_pos] != '-')
         en_pessant = {fen[fen_pos+1]-'1', fen[fen_pos++]-'a'};
-    
+
     fen_pos++;
     fen_pos++;
 
@@ -672,7 +674,7 @@ board::board (const string &fen)
         ply_100 *= 10;
         ply_100 += (fen[fen_pos++] - '0');
     }
-    
+
     fen_pos++;
 
     while(fen_pos < fen.size()){
