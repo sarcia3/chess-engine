@@ -15,14 +15,10 @@ int main() {
     auto legal = start.print_moves();
     start.print_board();
     while(legal.size()) {
-        cout <<"Evaluation: " << start.negaMax_search(3).first << '\n';
-        cout <<"move: " << start.negaMax_search(3).second.first << start.negaMax_search(3).second.second << '\n';
+        cout <<"move: " << start.print_best_move(4) << '\n';
         start.user_move(legal);
         clearConsole();
         legal = start.print_moves();
         start.print_board();
     }
-    return 0; 
 }
-
-

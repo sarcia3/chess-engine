@@ -27,22 +27,41 @@ float board::evaluate_white_pov() {
 346         copy.make_move(top, false);
 */
 
-pair<float, pair<int, int>> board::negaMax_search(int depth) {
-    if(depth <= 0) return {evaluate(), {-1, -1}};
-    
-//    cerr <<depth<<'\n';
+float board::negaMax_search(int depth) {
+    if(depth <= 0) return evaluate();
 
-    pair<float, pair<int, int>> max = {-9999999, {-1, -1}};
+    float max = -9999999;
     auto moves = gen_moves();
     while(moves.size()){
-//        cerr<< "depth: " << depth << " moves left: " << moves.size() << '\n';
         auto move = moves.top(); moves.pop();
         make_move(move, true);
-        auto score = negaMax_search(depth-1);
+        auto score = -negaMax_search(depth-1);
         undo_move(move);
-        score.first *= -1;
-        if(score.first > max.first)
+        if(score > max)
             max = score;
     }
     return max;
+}
+
+board::move board::get_best_move(int depth) {
+    float max = -9999999;
+    move res;
+
+    auto moves = gen_moves();
+    while(moves.size()){
+        auto move = moves.top(); moves.pop();
+        make_move(move, true);
+        auto score = -negaMax_search(depth-1);
+        undo_move(move);
+        if(score > max) {
+            max = score;
+            res = move;
+        }
+    }
+    return res;
+}
+
+string board::print_best_move(int depth) {
+    auto tmp = get_best_move(depth);
+    return board_utils::move_readable({tmp.start_pos, tmp.end_pos});
 }

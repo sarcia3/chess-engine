@@ -82,9 +82,9 @@ class board {
         //if we had always tried to update we would have an infinite loop
         void undo_move(const move &arg);
 
+        float negaMax_search(int depth);
 
-
-
+        move get_best_move(int depth);
     public: 
         enum game_state {undecided, white_won, draw_3_fold, draw_50_rule, draw_stalemate, black_won};
         
@@ -106,9 +106,8 @@ class board {
 
         float evaluate_white_pov();
         
-        pair<float, pair<int, int>> negaMax_search(int depth);
-
         int perft(int depth, int org_depth);
 
+        string print_best_move(int depth);
 };
 #endif
