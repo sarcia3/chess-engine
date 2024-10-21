@@ -347,9 +347,9 @@ stack<board::move> board::gen_moves() {
     }
 
     if(ply_100 == 100) return {};
-    if(turn == 0 && res.empty()) if(white_king & gen_attacked(!turn)) return {};
-    if(turn == 1 && res.empty()) if(black_king & gen_attacked(!turn)) return {};
-    if(res.empty()) return {};
+    if(turn == 0 && res.empty()) if(white_king & gen_attacked(!turn)) {current_state = black_won; return {};}
+    if(turn == 1 && res.empty()) if(black_king & gen_attacked(!turn)) {current_state = white_won; return {};}
+    if(res.empty()) {current_state = draw_stalemate; return {};}
 
     return res;
 }
